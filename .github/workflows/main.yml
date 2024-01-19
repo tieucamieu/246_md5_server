@@ -1,0 +1,39 @@
+name: Deploy
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:       
+    - name: Kết nối ssh linux -> và pull
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        password: ${{ secrets.PASSWORD }}
+        port: 22
+        script: |
+          cd /var/www/246_md5_project/server
+          git pull
+          . $HOME/.nvm/nvm.sh
+          nvm use
+          cp .env.example .env
+          sed -i 's/NUMBER/${{ secrets.SV_PORT }}/g' .env
+          sed -i 's/HOST_ADDRESS/${{ secrets.SV_HOST }}/g' .env
+          sed -i 's/PROTOCOL_TYPE/https:\/\//g' .env
+          npm ci
+          npm run build
+          sudo swapoff -a; sudo swapon -a
+          pm2 delete all
+          pm2 dist/main.js
+          curl -X POST -H "Content-Type: application/json" -H "Authorization:${{ secrets.DISCORD_TOKEN }}" -d '{"content":"Server của tôi đã deploy thành công link: https://api.thuyandesign.com/ "}' ${{ secrets.DISCORD_URL }}
