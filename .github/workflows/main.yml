@@ -23,17 +23,26 @@ jobs:
         password: ${{ secrets.PASSWORD }}
         port: 22
         script: |
+          echo "Truy cập vào thư mục dự án"
           cd /var/www/246_md5_project/server
+          echo "Pull code mới từ github"
           git pull
+          echo "Kích hoạt NVM"
           . $HOME/.nvm/nvm.sh
           nvm use
+          echo "Tạo .env và chỉnh sửa"
           cp .env.example .env
           sed -i 's/NUMBER/${{ secrets.SV_PORT }}/g' .env
           sed -i 's/HOST_ADDRESS/${{ secrets.SV_HOST }}/g' .env
           sed -i 's/PROTOCOL_TYPE/https:\/\//g' .env
+          echo "Cài đặt package theo package.json"
           npm ci
+          echo "Build dự án"
           npm run build
+          echo "Reset Bộ Nhớ Swap"
           sudo swapoff -a; sudo swapon -a
+          echo "Reset PM2"
           pm2 delete all
           pm2 start dist/main.js
+          echo "Gửi thông báo!"
           curl -X POST -H "Content-Type: application/json" -H "Authorization:${{ secrets.DISCORD_TOKEN }}" -d '{"content":"Server của tôi đã deploy thành công link: https://api.thuyandesign.com/ "}' ${{ secrets.DISCORD_URL }}
