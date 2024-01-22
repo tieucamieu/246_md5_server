@@ -42,6 +42,8 @@ jobs:
           sed -i 's/DB_NAME/${{ secrets.DB_NAME }}/g' .env
           echo "Cài đặt package theo package.json"
           npm ci
+          echo "Khởi tạo prisma client cho node module"
+          npx prisma generate
           echo "Build dự án"
           npm run build
           echo "Reset Bộ Nhớ Swap"
